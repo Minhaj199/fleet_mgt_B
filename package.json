@@ -1,0 +1,32 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx nodemon --exec ts-node ./src/app.ts",
+    "prisma:generate": "npx prisma generate --schema=./src/model/prisma/schema.prisma",
+    "migrate": "npx prisma migrate dev --schema=./src/model/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema=./model/prisma/schema.prisma",
+    "seed": "npx ts-node ./src/model/prisma/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "prisma": "^6.15.0",
+    "yamljs": "^0.3.0",
+    "zod": "^4.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2"
+  }
+}
