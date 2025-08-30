@@ -2,14 +2,71 @@ import { NextFunction, Request, Response } from "express";
 import { IncidentSeverity, IncidentType, PrismaClient } from "@prisma/client";
 import { IncidentInput } from "../type/type";
 import { insertData } from "../service/carService";
+import { incidentTable } from "../lib/respositories/queries";
 const prisma = new PrismaClient();
 export const controller = {
-  fetchAllincidents: (req: Request, res: Response, next: NextFunction) => {
-    try {
-   
-      
-    } catch (error) {
-      
+  fetchAllincidents: async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    if (req.query.from && req.query.from === "get-incident") {
+      const { id } = req.query;
+      const data = await prisma.incident.findUnique({
+        where: { id: Number(id) },
+      });
+      return res.json(data);
+    } else {
+      try {
+        const {
+          page = 1,
+          limit = 4,
+          query,
+          cars,
+          severity,
+          accidentOptions,
+          assignedTo,
+          startDate,
+          endDate,
+        } = req.query;
+
+        const limitParsed = Number(limit);
+        const skip = Number(page) - 1 * limitParsed;
+        const where: any = {};
+
+        if (query) {
+          where.OR = [
+            { title: { contains: query, mode: "insensitive" } },
+            { description: { contains: query, mode: "insensitive" } },
+          ];
+        }
+        if (cars) where.carId = Number(cars);
+        if (severity) where.severity = severity;
+        if (accidentOptions) where.type = accidentOptions;
+        if (assignedTo) where.assignedTo = assignedTo;
+        if (
+          startDate &&
+          endDate &&
+          typeof startDate === "string" &&
+          typeof endDate === "string"
+        ) {
+          where.occurredAt = {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          };
+        }
+        const data = await prisma.incident.findMany({
+          select: incidentTable.select,
+          where,
+          orderBy: { createdAt: "desc" },
+          skip: (Number(page) - 1) * Number(limit),
+          take: Number(limit),
+        });
+        const totoalCount = await prisma.incident.count({ where });
+        res.json({ data, totoalCount });
+      } catch (error) {
+        console.log(error);
+      }
     }
   },
   fetchSeeds: async (req: Request, res: Response, next: NextFunction) => {
@@ -17,77 +74,39 @@ export const controller = {
       const cars = await prisma.car.findMany();
       const users = await prisma.user.findMany();
       res.json({ cars, users });
-    } catch  {
-      next(new Error('internal server error'))
+    } catch {
+      next(new Error("internal server error"));
     }
   },
   createIncident: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      
-      const {data}=req.body
-  
-      const processedData:IncidentInput = {
-  title: data.title,
-  description: data.description,
-  type: data.incidentType as IncidentType,
-  severity: data.severity as IncidentSeverity,
-  location: data.location,
-  latitude: parseFloat(data.latitude),
-  longitude: parseFloat(data.longitude),
-  occurredAt: new Date(data.occurredAt),
-  estimatedCost: parseFloat(data.estimatedCost),
-  images: data?.images,
-  documents: data?.documents,
+      const { data } = req.body;
 
-  // relational fields
-  carId: parseInt(data.carName, 10),           // string -> int
-  reportedById: parseInt(data.reportedByName, 10),
-  
-  // optional, if you have a CarReading table
-  // carReadingId: data.odometer ? parseInt(data.odometer, 10) : undefined,
-};
- const result= await insertData(processedData)
+      const processedData: IncidentInput = {
+        title: data.title,
+        description: data.description,
+        type: data.incidentType as IncidentType,
+        severity: data.severity as IncidentSeverity,
+        location: data.location,
+        latitude: parseFloat(data.latitude),
+        longitude: parseFloat(data.longitude),
+        occurredAt: new Date(data.occurredAt),
+        estimatedCost: parseFloat(data.estimatedCost),
+        images: data?.images,
+        documents: data?.documents,
 
-      res.json('sucess');
-    } catch  (error){
-   
-      next(new Error('internal server error'))
+        // relational fields
+        carId: parseInt(data.carName, 10), // string -> int
+        reportedById: parseInt(data.reportedByName, 10),
+
+        // optional, if you have a CarReading table
+        // carReadingId: data.odometer ? parseInt(data.odometer, 10) : undefined,
+      };
+      const result = await insertData(processedData);
+
+      res.json("sucess");
+    } catch (error) {
+      next(new Error("internal server error"));
     }
   },
-
-
 };
-async function createIncident() {
-  const incident = await prisma.incident.create({
-    data: {
-      title: "Engine Failure",
-      description: "Car broke down on highway",
-      type: "BREAKDOWN",
-      severity: "HIGH",
-      occurredAt: new Date(),
-      reportedById: 1, // must exist in User table
-      carId: 1, // must exist in Car table
-    },
-  });
-
-}
-///////incidenttype---type
-
-const data={
-  title: 'dfdkfljla',
-  description: 'fkdllfkjaf',
-  incidentType: 'BREAKDOWN',
-  severity: 'HIGH',
-  location: 'fdfaf',
-  occurredAt: '2025-08-30T15:59',
-  latitude: '545',
-  longitude: '664',
-  odometer: '6546465',
-  estimatedCost: '15456',
-  carName: '2',
-  reportedByName: '2',
-  attachments: [
-    'https://res.cloudinary.com/dyomgcbln/image/upload/v1756538976/fleetmgt/czvk3xdn2c6hwxbstjss.png'
-  ]
-}
-
