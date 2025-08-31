@@ -104,8 +104,9 @@ export const controller = {
       };
       const result = await insertData(processedData);
 
-      res.json("sucess");
+      res.json(result);
     } catch (error) {
+      console.log(error)
       next(new Error("internal server error"));
     }
   },
