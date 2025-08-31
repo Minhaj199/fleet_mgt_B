@@ -3,6 +3,7 @@ import { IncidentSeverity, IncidentType, PrismaClient } from "@prisma/client";
 import { IncidentInput } from "../type/type";
 import { insertData } from "../service/carService";
 import { incidentTable } from "../lib/respositories/queries";
+import { inLineUpdate } from "../service/updationService";
 const prisma = new PrismaClient();
 export const controller = {
   fetchAllincidents: async (
@@ -14,7 +15,8 @@ export const controller = {
       const { id } = req.query;
       const data = await prisma.incident.findUnique({
         where: { id: Number(id) },
-      });
+      include:{updates:{include:{user:{select:{id:true,name:true}}}},car:{select:{make:true,model:true}},assignedTo:{select:{name:true}}}});
+   
       return res.json(data);
     } else {
       try {
@@ -30,8 +32,6 @@ export const controller = {
           endDate,
         } = req.query;
 
-        const limitParsed = Number(limit);
-        const skip = Number(page) - 1 * limitParsed;
         const where: any = {};
 
         if (query) {
@@ -43,7 +43,7 @@ export const controller = {
         if (cars) where.carId = Number(cars);
         if (severity) where.severity = severity;
         if (accidentOptions) where.type = accidentOptions;
-        if (assignedTo) where.assignedTo = assignedTo;
+        if (assignedTo) where.assignedToId =Number(assignedTo);
         if (
           startDate &&
           endDate &&
@@ -65,7 +65,7 @@ export const controller = {
         const totoalCount = await prisma.incident.count({ where });
         res.json({ data, totoalCount });
       } catch (error) {
-        console.log(error);
+    
       }
     }
   },
@@ -106,8 +106,31 @@ export const controller = {
 
       res.json(result);
     } catch (error) {
+   
+      next(new Error("internal server error"));
+    }
+  },
+   updateIncident: async (req: Request, res: Response, next: NextFunction) => {
+    ///////////udpating messages//
+    
+    try {
+      
+ 
+      const result=await prisma.incidentUpdate.create({data:{incidentId:Number(req.params.id),userId:Number(req.body.by),message:req.body.message,updateType:req.body.incidentType}})
+ 
+      res.json(result);
+    } catch (error) {
       console.log(error)
       next(new Error("internal server error"));
     }
   },
+  modifyIncident:async (req: Request, res: Response, next: NextFunction) =>{
+    try {
+  
+      const result=await inLineUpdate({...req.body,id:req.params.id,user:'2'})
+      res.json(result)
+    } catch (error) {
+  
+    }
+  }
 };

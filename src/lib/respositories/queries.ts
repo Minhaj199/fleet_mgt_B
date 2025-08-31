@@ -22,7 +22,8 @@ export const incidentTable={
         status :true,
         type:true,
         location:true,
-        occurredAt:true
+        occurredAt:true,
+        resolvedAt:true
     }
     
 }

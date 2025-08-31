@@ -6,5 +6,7 @@ const router=Router()
 router.get('/incidents',controller.fetchAllincidents)
 router.get('/fetch-seed',controller.fetchSeeds)
 router.post('/incidents',controller.createIncident)
+router.post('/incidents/updates/:id',controller.updateIncident)
+router.put('/incidents/:id',controller.modifyIncident)
 
 export {router}
