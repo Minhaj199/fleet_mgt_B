@@ -3,7 +3,7 @@ import { IncedentUpdateField, LogField } from "../type/type"
 
 
 export function changeFinder(orginal:any,modified:any){
-   
+
     if(!orginal)throw new Error('Incident not found')
         const specialFields=['images','documents','updates','incidentType','carName','occurredAt','reportedByName','car','assignedTo','carId','id','createdAt','reportedAt','updatedAt']
         const updatedFiedlsLogs:Record<LogField,any>[]=[]
@@ -65,11 +65,11 @@ export function changeFinder(orginal:any,modified:any){
         incidentUpdateLoge.push({updateType:updateTypeFinder('assignedTo'),message:`assignedTo changed from ${orginal['assignedToId']} to ${modified['assignedTo']}`,incidentId:orginal.id,userId:modifiedBy})
         
        }
-       if(modified.occurredAt&&new Date(modified.occurredAt)!==new Date(orginal.occurredAt) ){
-
+       if(modified.occurredAt&&new Date(modified.occurredAt).getTime()!==new Date(orginal.occurredAt).getTime()){
+       
       changed['occurredAt']=new Date(modified['occurredAt'])
          updatedFiedlsLogs.push({userId:2,field:'occurredAt',incidentId:orginal.id,newValue:String(modified['occurredAt']),oldValue:String(orginal['occurredAt'])})
-        incidentUpdateLoge.push({updateType:updateTypeFinder('occurredAt'),message:`occurredAt changed from ${orginal['occurredAt']} to ${modified['occurredAt']}`,incidentId:orginal.id,userId:modifiedBy})
+        incidentUpdateLoge.push({updateType:updateTypeFinder('occurredAt'),message:`occurredAt changed from ${new Date(orginal['occurredAt']).toLocaleDateString()} to ${new Date(modified['occurredAt']).toLocaleDateString()}`,incidentId:orginal.id,userId:modifiedBy})
 
         
        }
@@ -87,7 +87,8 @@ export function changeFinder(orginal:any,modified:any){
         incidentUpdateLoge.push({updateType:updateTypeFinder('reportedBy'),message:`reportedBy changed from ${orginal['reportedById']} to ${modified['reportedByName']}`,incidentId:orginal.id,userId:modifiedBy})
         
        }
-       if(!Object.keys(changed).length)throw new Error('new updation found')
+       console.log(incidentUpdateLoge)
+       if(!Object.keys(changed).length)throw new Error('no updation found')
        return {changed,incidentUpdateLoge,updatedFiedlsLogs}
 }
 

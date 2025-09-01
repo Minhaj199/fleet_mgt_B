@@ -5,6 +5,7 @@ import { insertData } from "../service/createService";
 import { incidentTable } from "../lib/respositories/queries";
 import { inLineUpdate, reportModification } from "../service/updationService";
 import { changeFinder } from "../utils/changeFinder";
+import { IncidentInputValidator } from "../validators/zodValidators";
 const prisma = new PrismaClient();
 export const controller = {
   fetchAllincidents: async (
@@ -75,39 +76,38 @@ export const controller = {
       const cars = await prisma.car.findMany();
       const users = await prisma.user.findMany();
       res.json({ cars, users });
-    } catch {
+    } catch (error){
+      console.log(error)
       next(new Error("internal server error"));
     }
   },
   createIncident: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { data } = req.body;
-
+      const isValid=IncidentInputValidator(req.body.data)
+      
       const processedData: IncidentInput = {
-        title: data.title,
-        description: data.description,
-        type: data.incidentType as IncidentType,
-        severity: data.severity as IncidentSeverity,
-        location: data.location,
-        latitude: parseFloat(data.latitude),
-        longitude: parseFloat(data.longitude),
-        occurredAt: new Date(data.occurredAt),
-        estimatedCost: parseFloat(data.estimatedCost),
-        images: data?.images,
-        documents: data?.documents,
+        title: isValid.title,
+        description: isValid.description,
+        type: isValid.incidentType as IncidentType,
+        severity: isValid.severity as IncidentSeverity,
+        location: isValid.location,
+        latitude: isValid.latitude?isValid.latitude:undefined,
+        longitude:isValid.longitude?isValid.longitude:undefined,
+        occurredAt: new Date(isValid.occurredAt),
+        estimatedCost: isValid.estimatedCost,
+        images: isValid?.images,
+        documents: isValid?.documents,
 
     
-        carId: parseInt(data.carName, 10), 
-        reportedById: parseInt(data.reportedByName, 10),
+        carId: parseInt(isValid.carName, 10), 
+        reportedById: parseInt(isValid.reportedByName, 10),
 
     
       };
       const result = await insertData(processedData);
-
       res.status(201).json(result);
     } catch (error) {
-   
-      next(new Error("internal server error"));
+      next(error);
     }
   },
    updateIncident: async (req: Request, res: Response, next: NextFunction) => {
@@ -130,11 +130,12 @@ export const controller = {
        if(req.body.from==='MAIN_UPDATE'){
         
          const { id } = req.params;
-    
+         
+         console.log(req.body)
          const data = await prisma.incident.findUnique({
         where: { id: Number(id) },
-        
         include:{updates:{include:{user:{select:{id:true,name:true}}}},car:{select:{make:true,model:true}},assignedTo:{select:{name:true}}}});
+       changeFinder(data,req.body)
         const {incidentUpdateLoge,changed,updatedFiedlsLogs}:{incidentUpdateLoge:Record<IncedentUpdateField,any>[],changed:Partial<Incident>,updatedFiedlsLogs:Record<LogField,any>[]}=changeFinder(data,req.body)
           const updatedData=reportModification(changed,id,incidentUpdateLoge,updatedFiedlsLogs)
          res.json(updatedData)
@@ -145,13 +146,12 @@ export const controller = {
         if(orginalValue){
           const result=await inLineUpdate({...req.body,id,user:'2'},orginalValue,)
           res.json(result)
-
         }else{
           throw new Error('document not found')
         }
        }
     } catch (error) {
-      console.log(error)
+      next(error)
     }
   }
 };

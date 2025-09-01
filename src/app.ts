@@ -3,6 +3,7 @@ import { router } from './router/router'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import { PrismaClient } from '@prisma/client';
+import { errorHanlder } from './middleware/errorHandler';
 
 export const prisma = new PrismaClient();
 dotenv.config()
@@ -25,8 +26,5 @@ app.use('/api',router)
 
 
 
-app.use((err:Error,req:Request,response:Response,next:NextFunction)=>{
-    console.log(err)
-    next()
-})
+app.use(errorHanlder)
 app.listen(process.env.PORT,()=>console.log('started'))
