@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import { IncidentSeverity, IncidentType, PrismaClient } from "@prisma/client";
-import { IncidentInput } from "../type/type";
-import { insertData } from "../service/carService";
+import { Incident, IncidentSeverity, IncidentType, PrismaClient } from "@prisma/client";
+import { IncedentUpdateField, IncidentInput, LogField } from "../type/type";
+import { insertData } from "../service/createService";
 import { incidentTable } from "../lib/respositories/queries";
-import { inLineUpdate } from "../service/updationService";
+import { inLineUpdate, reportModification } from "../service/updationService";
+import { changeFinder } from "../utils/changeFinder";
 const prisma = new PrismaClient();
 export const controller = {
   fetchAllincidents: async (
@@ -15,7 +16,7 @@ export const controller = {
       const { id } = req.query;
       const data = await prisma.incident.findUnique({
         where: { id: Number(id) },
-      include:{updates:{include:{user:{select:{id:true,name:true}}}},car:{select:{make:true,model:true}},assignedTo:{select:{name:true}}}});
+      include:{updates:{include:{user:{select:{id:true,name:true}}}},car:{select:{make:true,model:true}},assignedTo:{select:{name:true,id:true}}}});
    
       return res.json(data);
     } else {
@@ -95,16 +96,15 @@ export const controller = {
         images: data?.images,
         documents: data?.documents,
 
-        // relational fields
-        carId: parseInt(data.carName, 10), // string -> int
+    
+        carId: parseInt(data.carName, 10), 
         reportedById: parseInt(data.reportedByName, 10),
 
-        // optional, if you have a CarReading table
-        // carReadingId: data.odometer ? parseInt(data.odometer, 10) : undefined,
+    
       };
       const result = await insertData(processedData);
 
-      res.json(result);
+      res.status(201).json(result);
     } catch (error) {
    
       next(new Error("internal server error"));
@@ -126,11 +126,32 @@ export const controller = {
   },
   modifyIncident:async (req: Request, res: Response, next: NextFunction) =>{
     try {
-  
-      const result=await inLineUpdate({...req.body,id:req.params.id,user:'2'})
-      res.json(result)
+   
+       if(req.body.from==='MAIN_UPDATE'){
+        
+         const { id } = req.params;
+    
+         const data = await prisma.incident.findUnique({
+        where: { id: Number(id) },
+        
+        include:{updates:{include:{user:{select:{id:true,name:true}}}},car:{select:{make:true,model:true}},assignedTo:{select:{name:true}}}});
+        const {incidentUpdateLoge,changed,updatedFiedlsLogs}:{incidentUpdateLoge:Record<IncedentUpdateField,any>[],changed:Partial<Incident>,updatedFiedlsLogs:Record<LogField,any>[]}=changeFinder(data,req.body)
+          const updatedData=reportModification(changed,id,incidentUpdateLoge,updatedFiedlsLogs)
+         res.json(updatedData)
+        }else{
+          const { id } = req.params;
+         
+        const orginalValue=await prisma.incident.findUnique({where:{id:Number(id)},include:{assignedTo:true}})
+        if(orginalValue){
+          const result=await inLineUpdate({...req.body,id,user:'2'},orginalValue,)
+          res.json(result)
+
+        }else{
+          throw new Error('document not found')
+        }
+       }
     } catch (error) {
-  
+      console.log(error)
     }
   }
 };

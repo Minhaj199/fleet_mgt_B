@@ -37,7 +37,7 @@ model Incident {
   assignedTo      User?            @relation("IncidentAssignee", fields: [assignedToId], references: [id])
   carReading      CarReading? @relation(fields: [carReadingId], references: [id])
   updates         IncidentUpdate[]
-
+  auditLogs       IncidentAuditLog[]   
   @@index([carId])
   @@index([reportedById])
   @@index([assignedToId])
@@ -93,7 +93,26 @@ model User {
   reportedIncidents Incident[]      @relation("IncidentReporter")
   assignedIncidents Incident[]      @relation("IncidentAssignee")
   updates           IncidentUpdate[]
+  auditLogs       IncidentAuditLog[]  
 }
+model IncidentAuditLog {
+  id         Int      @id @default(autoincrement())
+  incidentId Int
+  userId     Int
+  field      String    
+  oldValue   String?   
+  newValue   String?  
+  createdAt  DateTime  @default(now())
+
+
+  incident   Incident  @relation(fields: [incidentId], references: [id])
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@index([incidentId])
+  @@index([userId])
+  @@map("incident_audit_logs")
+}
+
 
 enum IncidentSeverity {
   LOW

@@ -2,6 +2,9 @@ import express, { NextFunction, Request, Response } from 'express'
 import { router } from './router/router'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import { PrismaClient } from '@prisma/client';
+
+export const prisma = new PrismaClient();
 dotenv.config()
 
 const corsOptins={
