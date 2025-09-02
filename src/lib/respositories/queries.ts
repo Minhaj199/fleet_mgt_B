@@ -5,6 +5,7 @@ export const incidentTable = {
   select: {
     id: true,
     title: true,
+    reportedBy: { select: { name: true, id: true } },
     description: true,
     car: {
       select: {

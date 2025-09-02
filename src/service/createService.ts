@@ -1,7 +1,5 @@
-
 import { prisma } from "../app";
 import { IncidentInput } from "../type/type";
-
 
 export const insertData = async (data: IncidentInput) => {
   const incident = await prisma.$transaction(async (tx) => {
@@ -17,23 +15,22 @@ export const insertData = async (data: IncidentInput) => {
       data: { ...data, carReadingId: reading ? reading.id : null },
     });
     await tx.incidentUpdate.create({
-      data:{
-        incidentId:incident.id,
-        userId:incident.reportedById,
-        message:'Incident created',
-        updateType: "COMMENT"
-      }
-    })
+      data: {
+        incidentId: incident.id,
+        userId: incident.reportedById,
+        message: "Incident created",
+        updateType: "COMMENT",
+      },
+    });
     await tx.incidentAuditLog.create({
-      data:{
-        incidentId:incident.id,
-        userId:incident.reportedById,
-        field:'incident',
-        oldValue:null,
-        newValue:'created incident'
-
-      }
-    })
+      data: {
+        incidentId: incident.id,
+        userId: incident.reportedById,
+        field: "incident",
+        oldValue: null,
+        newValue: "created incident",
+      },
+    });
     return incident;
   });
   return incident;

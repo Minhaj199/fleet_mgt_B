@@ -65,10 +65,10 @@ CREATE TABLE "public"."Car" (
 -- CreateTable
 CREATE TABLE "public"."CarReading" (
     "id" SERIAL NOT NULL,
-    "carId" INTEGER NOT NULL,
     "mileage" INTEGER NOT NULL,
     "fuelLevel" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "carId" INTEGER NOT NULL,
 
     CONSTRAINT "CarReading_pkey" PRIMARY KEY ("id")
 );
@@ -81,6 +81,19 @@ CREATE TABLE "public"."User" (
     "password" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."incident_audit_logs" (
+    "id" SERIAL NOT NULL,
+    "incidentId" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "field" TEXT NOT NULL,
+    "oldValue" TEXT,
+    "newValue" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "incident_audit_logs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -113,6 +126,12 @@ CREATE UNIQUE INDEX "Car_plateNumber_key" ON "public"."Car"("plateNumber");
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "public"."User"("email");
 
+-- CreateIndex
+CREATE INDEX "incident_audit_logs_incidentId_idx" ON "public"."incident_audit_logs"("incidentId");
+
+-- CreateIndex
+CREATE INDEX "incident_audit_logs_userId_idx" ON "public"."incident_audit_logs"("userId");
+
 -- AddForeignKey
 ALTER TABLE "public"."incidents" ADD CONSTRAINT "incidents_carId_fkey" FOREIGN KEY ("carId") REFERENCES "public"."Car"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -133,3 +152,9 @@ ALTER TABLE "public"."incident_updates" ADD CONSTRAINT "incident_updates_userId_
 
 -- AddForeignKey
 ALTER TABLE "public"."CarReading" ADD CONSTRAINT "CarReading_carId_fkey" FOREIGN KEY ("carId") REFERENCES "public"."Car"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."incident_audit_logs" ADD CONSTRAINT "incident_audit_logs_incidentId_fkey" FOREIGN KEY ("incidentId") REFERENCES "public"."incidents"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."incident_audit_logs" ADD CONSTRAINT "incident_audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

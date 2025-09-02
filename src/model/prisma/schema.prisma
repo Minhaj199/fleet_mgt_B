@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,7 +7,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 model Incident {
   id              Int              @id @default(autoincrement())
   carId           Int
@@ -150,4 +150,4 @@ enum IncidentUpdateType {
   COST_UPDATE
   RESOLUTION
   @@map("incident_update_types")
-}
+} 

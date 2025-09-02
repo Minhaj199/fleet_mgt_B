@@ -5,7 +5,6 @@ import { AppError } from "../error/error";
 export const errorHanlder=(err:Error,req:Request,res:Response,next:NextFunction)=>{
 
     if(err instanceof AppError){
-        console.log(err.toJSON())
         res.status(err.statusCode).json(err.toJSON())
     }else if(err instanceof Error){
         res.status(500).json({message:err.message||'internal server error'})
